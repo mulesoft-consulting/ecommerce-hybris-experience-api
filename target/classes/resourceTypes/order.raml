@@ -1,0 +1,12 @@
+#%RAML 1.0 ResourceType
+description: Create an <<resourcePathName | !singularize>> 
+displayName: Create <<resourcePathName | !singularize>>
+post:
+  description: Send <<resourcePathName | !singularize>> to Order System
+  displayName: Create new <<resourcePathName | !singularize>>
+  headers: 
+    Accept:
+  responses:
+    201: 
+      headers: 
+        Content-Type:

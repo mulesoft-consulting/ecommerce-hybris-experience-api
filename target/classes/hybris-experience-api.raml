@@ -1,0 +1,18 @@
+#%RAML 1.0
+title: Hybris Experience API
+version: v1.0
+mediaType: [application/json]
+
+
+resourceTypes: 
+  orderType: !include resourceTypes/order.raml  
+
+/orders:
+  type: orderType
+  post:
+    body: 
+    responses: 
+      201:
+        body: 
+          example: !include examples/order_post_response.raml
+      
