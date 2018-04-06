@@ -1,0 +1,16 @@
+{
+    "inputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "HybrisOrderPayload"
+        }
+    },
+    "outputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "orderPayload"
+        }
+    },
+    "id": "3464b2f0-e6fe-4014-9060-9dc00e356d3d",
+    "version": "5.2.0.0"
+}

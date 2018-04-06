@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:metadata="http://www.mulesoft.org/schema/mule/metadata" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:spring="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/apikit http://www.mulesoft.org/schema/mule/apikit/current/mule-apikit.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
 http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
-http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
     <http:listener-config name="hybris-experience-api-httpListenerConfig" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
     <apikit:config name="hybris-experience-api-config" raml="hybris-experience-api.raml" consoleEnabled="false" doc:name="Router"/>
     <queued-asynchronous-processing-strategy name="Queued_Asynchronous_Processing_Strategy" doc:name="Queued Asynchronous Processing Strategy"/>
     <http:request-config name="HTTP_Request_Configuration" host="order-fulfillment-process-api.cloudhub.io" port="80" basePath="/api" doc:name="HTTP Request Configuration"/>
+    <http:request-config name="HTTP_SalesForce" host="digital-commerce-salesforce-api.cloudhub.io" port="80" basePath="/api" doc:name="HTTP Request Configuration"/>
     <flow name="hybris-experience-api-main">
         <http:listener config-ref="hybris-experience-api-httpListenerConfig" path="/api/*" doc:name="HTTP"/>
         <apikit:router config-ref="hybris-experience-api-config" doc:name="APIkit Router"/>
@@ -19,26 +21,86 @@ http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee
         <apikit:console config-ref="hybris-experience-api-config" doc:name="APIkit Console"/>
     </flow>
     <flow name="post:/orders:hybris-experience-api-config">
-        <dw:transform-message doc:name="Transform Message">
+        <dw:transform-message doc:name="Transform Message" metadata:id="7804bfd7-814f-44ed-8af7-97bc2ae9323c">
+            <dw:input-inbound-property mimeType="application/json" propertyName="http.request.uri"/>
             <dw:set-payload><![CDATA[%dw 1.0
 %output application/java
 ---
 payload]]></dw:set-payload>
         </dw:transform-message>
         <set-variable variableName="rawPayload" value="#[payload]" doc:name="Variable"/>
-        <dw:transform-message doc:name="Transform Message">
-            <dw:set-payload><![CDATA[%dw 1.0
+        <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <scatter-gather doc:name="Scatter-Gather">
+            <processor-chain>
+                <dw:transform-message doc:name="Transform Message" metadata:id="3464b2f0-e6fe-4014-9060-9dc00e356d3d">
+                    <dw:input-payload doc:sample="/Users/anthonychaseendran/Downloads/orderData.json" mimeType="application/json"/>
+                    <dw:set-payload><![CDATA[%dw 1.0
 %output application/json
 ---
-payload]]></dw:set-payload>
-        </dw:transform-message>
-        <http:request config-ref="HTTP_Request_Configuration" path="/orders" method="POST" doc:name="HTTP"/>
-        <dw:transform-message doc:name="Transform Message">
-            <dw:set-payload><![CDATA[%dw 1.0
-%output application/json
+{
+	customerId: payload.user.uid,
+	orderId: payload.code,
+	orderItems: payload.entries map ((entry , indexOfEntry) -> {
+		itemId: entry.entryNumber as :string,
+		productId: entry.product.code,
+		location: {
+			locationId: payload.deliveryMode.code,
+			locationType: "WAREHOUSE",
+			deliveryMethod: "SHIPMENT"
+		},
+		price: entry.totalPrice.value as :string,
+		name: entry.product.name,
+		quantity: entry.quantity
+	}),
+	price: payload.totalPriceWithTax.value as :string,
+	status: "Draft"
+}]]></dw:set-payload>
+                </dw:transform-message>
+                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+                <http:request config-ref="HTTP_Request_Configuration" path="/orders" method="POST" doc:name="HTTP"/>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
 ---
 payload]]></dw:set-payload>
-        </dw:transform-message>
+                </dw:transform-message>
+            </processor-chain>
+            <processor-chain>
+                <dw:transform-message doc:name="Transform Message" metadata:id="24e8b32e-2390-46a6-a076-c6c851f16156">
+                    <dw:input-payload mimeType="application/json"/>
+                    <dw:input-variable mimeType="application/json" variableName="rawPayload"/>
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/json
+---
+{
+	deliveryAddress: {
+		email: payload.user.uid,
+		firstName: payload.deliveryAddress.firstName,
+		lastName: payload.deliveryAddress.lastName,
+		phone: payload.deliveryAddress.phone,
+		line1: payload.deliveryAddress.line1,
+		line2: payload.deliveryAddress.line2,
+		town: payload.deliveryAddress.town,
+		region: {
+			isocode: payload.deliveryAddress.country.isocode
+		},
+		postalCode: payload.deliveryAddress.postalCode,
+		country: {
+			isocode: payload.deliveryAddress.country.isocode
+		}
+	}
+}]]></dw:set-payload>
+                </dw:transform-message>
+                <logger message="#[payload]" level="INFO" doc:name="Logger"/>
+                <http:request config-ref="HTTP_SalesForce" path="/salesforce/contact" method="POST" doc:name="HTTP"/>
+                <dw:transform-message doc:name="Transform Message">
+                    <dw:set-payload><![CDATA[%dw 1.0
+%output application/java
+---
+payload]]></dw:set-payload>
+                </dw:transform-message>
+            </processor-chain>
+        </scatter-gather>
         <async doc:name="Async">
             <expression-component doc:name="Sample Context" metadata:id="7a0bffbc-c7b2-4710-ae6d-e118ace0d0d2"><![CDATA[flowVars.inboundContext = {
   "time": server.dateTime.toDate().getTime(),

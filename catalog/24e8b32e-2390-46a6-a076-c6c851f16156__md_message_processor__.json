@@ -1,0 +1,22 @@
+{
+    "inputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "HybrisOrderPayload"
+        },
+        "flowVariables": {
+            "rawPayload": {
+                "connectorName": "#_custom_mule_metadata_type_#",
+                "typeId": "HybrisOrderPayload"
+            }
+        }
+    },
+    "outputMessageMetadata": {
+        "messagePayload": {
+            "connectorName": "#_custom_mule_metadata_type_#",
+            "typeId": "SFDCPayload"
+        }
+    },
+    "id": "24e8b32e-2390-46a6-a076-c6c851f16156",
+    "version": "5.2.0.0"
+}

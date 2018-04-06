@@ -1,0 +1,13 @@
+{
+    "inputMessageMetadata": {
+        "inboundProperties": {
+            "http.request.uri": {
+                "connectorName": "#_custom_mule_metadata_type_#",
+                "typeId": "HybrisOrderPayload"
+            }
+        }
+    },
+    "outputMessageMetadata": {},
+    "id": "7804bfd7-814f-44ed-8af7-97bc2ae9323c",
+    "version": "5.2.0.0"
+}
