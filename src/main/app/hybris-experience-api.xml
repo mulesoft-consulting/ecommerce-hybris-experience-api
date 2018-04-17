@@ -30,6 +30,7 @@ payload]]></dw:set-payload>
         </dw:transform-message>
         <set-variable variableName="rawPayload" value="#[payload]" doc:name="Variable"/>
         <json:object-to-json-transformer doc:name="Object to JSON"/>
+        <logger message="#[payload]" level="INFO" doc:name="Logger"/>
         <scatter-gather doc:name="Scatter-Gather">
             <processor-chain>
                 <dw:transform-message doc:name="Transform Message" metadata:id="3464b2f0-e6fe-4014-9060-9dc00e356d3d">
