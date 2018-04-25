@@ -126,7 +126,7 @@ payload]]></dw:set-payload>
 		properties: {
         	scope:"tailor",
 	     	type:"events",
-			table:"sampleEvent",
+			table:"hybrisOrders",
 	        queryParams:"sync=true&timestamp=eventTime&format=eventTime,timestamp,milliseconds"
 	  	}
 	}
